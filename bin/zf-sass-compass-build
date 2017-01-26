@@ -1,0 +1,29 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Ppito
+ * Date: 01/24/2017
+ * Time: 09:02 PM
+ *
+ * Inspired by https://github.com/leafo/scssphp-compass
+ */
+
+define('STYLESHEETS', dirname(__DIR__) . '/stylesheets/sass');
+define('TMPDIR', dirname(__DIR__) . '/data');
+
+chdir(TMPDIR);
+if (file_exists(TMPDIR . '/compass')) {
+    chdir(TMPDIR . '/compass');
+    passthru('git pull');
+} else {
+    echo "This may take several minutes." . PHP_EOL;
+    passthru('git clone https://github.com/Compass/compass.git');
+}
+
+if (file_exists(STYLESHEETS)) {
+    passthru("rm -rf " . STYLESHEETS);
+}
+mkdir(STYLESHEETS, 0755, true);
+
+passthru("cp -rf " . TMPDIR . '/compass/core/stylesheets/* ' . STYLESHEETS);
