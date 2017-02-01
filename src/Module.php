@@ -19,7 +19,6 @@ use Zend\ModuleManager\Feature\ConfigProviderInterface;
 
 use Zend\ServiceManager\ServiceManager;
 use Zend\Http\Response as HttpResponse;
-use Zend\View\View;
 use Zend\View\ViewEvent;
 
 class Module implements ConfigProviderInterface, BootstrapListenerInterface {
@@ -43,57 +42,26 @@ class Module implements ConfigProviderInterface, BootstrapListenerInterface {
         /** @var ServiceManager $serviceManager */
         $serviceManager = $application->getServiceManager();
 
-        $this->configureService($serviceManager);
-        /** @var View $view */
-        $view = $serviceManager->has(View::class) ?
-            $serviceManager->get(View::class) :
-            null;
-
-        if ($view) {
-            $view->getEventManager()
-                 ->attach(ViewEvent::EVENT_RESPONSE, [
-                     $this,
-                     'prepareException2',
-                 ]);
-        }
+        $this->configureEvent($serviceManager);
     }
 
     /**
-     * Whoops handle exceptions
-     *
-     * @param ViewEvent $e
-     */
-    public function prepareException2(ViewEvent $e) {
-        /** @var \Zend\View\Renderer\PhpRenderer|\ZendTwig\Renderer\TwigRenderer $renderer */
-        $renderer = $e->getRenderer();
-        if ($renderer instanceof \ZendTwig\Renderer\TwigRenderer) {
-            $pluginManager = $renderer->getZendHelpers();
-        } else {
-            $pluginManager = $renderer->getHelperPluginManager();
-        }
-        $containerLink = $pluginManager->get('headLink')->getContainer();
-
-        $styles = [];
-        foreach ($containerLink as $link) {
-            if (isset($link->rel) && $link->rel == 'stylesheet') {
-                $res = preg_match('#^(?:http://|https://|//)([^/]+)(.*)$#', $link->href, $matches);
-                if (!$res) {
-                    $styles[] = $link->href;
-                } else if ($matches[1] == $_SERVER['SERVER_NAME']) {
-                    $styles[] = $matches[2];
-                }
-            }
-        }
-    }
-    /**
-     * Configure Whoops Service
+     * Configure zf3SassCompiler Service
      *
      * @param \Interop\Container\ContainerInterface $container
      */
-    protected function configureService(ContainerInterface $container) {
-        $config = $container->has('config') ? $container->get('config') : [];
-        $config = isset($config['zf3-sass']) ? $config['zf3-sass'] : [];
+    protected function configureEvent(ContainerInterface $container) {
+        /** @var Service\SassCompilerService $service */
+        $service = $container->has(Service\SassCompilerService::class) ?
+            $container->get(Service\SassCompilerService::class) :
+            null;
 
+        if ($service) {
+            $service->getEventManager()
+                    ->attach(ViewEvent::EVENT_RESPONSE, [
+                        $service,
+                        'prepareStyle',
+                    ]);
+        }
     }
-
 }

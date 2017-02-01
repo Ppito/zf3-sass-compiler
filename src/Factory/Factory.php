@@ -28,7 +28,7 @@ class Factory implements FactoryInterface  {
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null) {
 
         $config = $container->has('config') ? $container->get('config') : [];
-        $config = isset($config['zf3-sass']) ? $config['zf3-sass'] : [];
+        $config = isset($config['zf3_sass_compiler']) ? $config['zf3_sass_compiler'] : [];
 
         return new $requestedName($container, $config);
     }
